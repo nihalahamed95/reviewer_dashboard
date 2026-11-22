@@ -1,0 +1,62 @@
+{
+    "articles": [
+        {
+            "id": "art_101",
+            "title": "Optimizing State Management in Large Angular Applications",
+            "author": {
+                "name": "David Smith",
+                "institution": "Stanford University"
+            }
+        },
+        {
+            "id": "art_102",
+            "title": "A Comparative Study of Modern PHP 8.x Architecture Patterns",
+            "author": {
+                "name": "Maria Garcia",
+                "institution": "University of Toronto"
+            }
+        }
+    ],
+    "reviewers": [
+        {
+            "id": "rev_001",
+            "name": "Dr. Alice Chen",
+            "institution": "Stanford University",
+            "keywords": [
+                "Angular",
+                "Frontend Performance",
+                "RxJS"
+            ]
+        },
+        {
+            "id": "rev_002",
+            "name": "Prof. John Doe",
+            "institution": "MIT",
+            "keywords": [
+                "Web Frameworks",
+                "PHP",
+                "Backend Architecture"
+            ]
+        },
+        {
+            "id": "rev_003",
+            "name": "Dr. Emily Wong",
+            "institution": "University of Toronto",
+            "keywords": [
+                "Software Engineering",
+                "PHP",
+                "Design Patterns"
+            ]
+        },
+        {
+            "id": "rev_004",
+            "name": "Dr. Robert Tables",
+            "institution": "Oxford University",
+            "keywords": [
+                "Databases",
+                "API Design",
+                "Data Modeling"
+            ]
+        }
+    ]
+}

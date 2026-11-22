@@ -1,0 +1,305 @@
+================================================================================
+                     REVIEWER MATCHING BOARD - USER MANUAL
+                  Full-Stack Academic Peer Review Governance Hub
+                    (PHP 8.2 Backend + Angular 18 Standalone)
+================================================================================
+
+1. OVERVIEW & PURPOSE
+--------------------------------------------------------------------------------
+The Reviewer Matching Board is a single-page editorial management application 
+built for academic journal editors. It allows managing editors to evaluate 
+submitted research manuscripts, discover qualified peer reviewers from an academic 
+corpus (mock_openalex_data.json), assign referees, and strictly enforce 
+institutional independence rules (Conflict of Interest prevention).
+
+Key System Highlights:
+* 100% Standalone Angular 18 architecture (Signals, Reactive HTTP Streams).
+* Full mobile responsiveness with adaptive bottom dock navigation.
+* Native PHP 8.2 REST API served directly by XAMPP Apache on localhost.
+* HMAC-SHA256 JWT token authentication with functional Angular HTTP Interceptor.
+* Master Data Management (Article Master & Reviewer Master CRUD).
+* Account security (Change Password) and Database Reset (Restore Default Mock JSON).
+* Automated referee assignment email notifications toggle in Settings.
+* Strict Institutional Conflict of Interest (COI) enforcement on both frontend 
+  and backend (HTTP 409 Conflict).
+
+
+================================================================================
+2. PROJECT FOLDER STRUCTURE
+================================================================================
+The entire application resides inside your XAMPP web root:
+C:\xampp\htdocs\straive_task\
+
+Directory Tree:
+├── api/                               # Backend REST API (XAMPP Apache)
+│   ├── data/                          # Persistent storage
+│   │   ├── articles.json              # Dynamic articles store
+│   │   ├── reviewers.json             # Dynamic reviewers store
+│   │   ├── assignments.json           # Reviewer assignments store
+│   │   └── users.json                 # User accounts & passwords
+│   ├── .htaccess                      # Apache mod_rewrite clean routing
+│   ├── index.php                      # Main REST controller & business logic
+│   └── verify.php                     # Automated test verification suite
+├── src/                               # Frontend Angular 18 Standalone App
+│   ├── app/
+│   │   ├── components/
+│   │   │   ├── login/                 # Dedicated full-screen Login Page
+│   │   │   ├── settings/              # Settings & Restore Default Mock Data Modal
+│   │   │   └── toast/                 # Floating notifications outlet
+│   │   ├── core/
+│   │   │   └── interceptors/          # JWT Bearer Token HTTP Interceptor
+│   │   ├── models/                    # Clean TypeScript models & API interfaces
+│   │   ├── services/
+│   │   │   ├── auth.service.ts        # JWT authentication & session management
+│   │   │   ├── reviewer-matching.ts   # HTTP API communication & Master CRUD
+│   │   │   └── toast.service.ts       # Signal-based toast alerts
+│   │   ├── app.component.html         # Master-detail, Master views & Settings
+│   │   ├── app.component.ts           # Root reactive controller
+│   │   ├── app.component.css          # Lumina SaaS design system stylesheet
+│   │   └── app.config.ts              # Modern standalone bootstrap configuration
+│   ├── index.html
+│   ├── main.ts
+│   └── styles.css
+├── angular.json                       # Angular CLI workspace config
+├── package.json                       # Dependencies & scripts
+├── proxy.conf.json                    # API reverse proxy configuration
+├── mock_openalex_data.json            # Seed dataset
+├── USER_MANUAL.txt                    # This user manual and documentation
+└── README.md                          # Quick-start guide
+
+
+================================================================================
+3. STEP-BY-STEP SETUP & HOW TO RUN
+================================================================================
+
+STEP 1: Start XAMPP Apache
+--------------------------
+You do NOT need to run any manual PHP CLI server command (like `php -S`).
+1. Open the XAMPP Control Panel.
+2. Click "Start" next to "Apache" (Runs on Port 80 / 443).
+3. Test that the API is running by visiting:
+   http://localhost/straive_task/api/articles
+   (You should receive a valid JSON array of articles).
+
+STEP 2: Start Angular Development Server
+----------------------------------------
+1. Open a terminal (PowerShell or Command Prompt).
+2. Change directory into the project root:
+   cd C:\xampp\htdocs\straive_task
+3. Install frontend dependencies (first time only):
+   npm install
+   (On Windows PowerShell, use `npm.cmd install` if security execution policies apply).
+4. Launch the application:
+   npm start
+   (or: `npx ng serve`)
+5. Open your web browser at:
+   http://localhost:4200
+
+
+================================================================================
+4. USER AUTHENTICATION & LOGIN WORKFLOW
+================================================================================
+
+A. Dedicated Login Page:
+* When you open http://localhost:4200 without an active session, you are 
+  presented with a dedicated full-screen authentication screen.
+* The workspace dashboard is completely unmounted until authentication succeeds.
+
+B. Pre-Configured Demo Credentials:
+* Email:    editor@straive.com
+* Password: admin123
+* Role:     Managing Editor
+
+C. 1-Click Fast Authentication:
+* You can click the "⚡ 1-Click Demo Login" button to automatically fill 
+  credentials and authenticate immediately.
+
+D. JWT Bearer Interceptor:
+* Upon successful authentication, the backend generates an HMAC-SHA256 JWT token.
+* An Angular functional HTTP interceptor automatically appends:
+  Authorization: Bearer <jwt_token>
+  to every outgoing request to the backend.
+
+E. Clean Sign Out:
+* Click the Log Out icon at the bottom of the left dock or in the top-right 
+  profile menu.
+* Logging out completely invalidates the session, purges localStorage, unmounts 
+  the dashboard, and safely returns to the login screen.
+
+
+================================================================================
+5. REVIEWER MATCHING BOARD & CONFLICT OF INTEREST RULE
+================================================================================
+
+A. Workspace Layout:
+* Left Pane: List of pending manuscripts with ID, author, and institution.
+* Right Pane: Referee Matching Workspace displaying ranked candidate reviewers.
+* Top Metrics Bar: Real-time counts of Total Articles, Available Reviewers, 
+  Ineligible Pairs, and Active Assignments.
+
+B. The Core Institutional Eligibility Rule:
+* Rule: An author and peer reviewer sharing the same academic institution cannot 
+  be paired together (Conflict of Interest).
+
+* Concrete Scenario in mock_openalex_data.json:
+  - Article:  art_101 ("Optimizing State Management in Large Angular Applications")
+  - Author:   David Smith (Stanford University)
+  - Reviewer: Dr. Alice Chen (Stanford University)
+
+* Frontend Enforcement:
+  - Status Badge: Displays "🚫 Ineligible to assign".
+  - Button State: The "Assign Reviewer" button is strictly disabled.
+  - Reason Box: An explicit callout is displayed directly below the reviewer:
+    "Reason: Ineligible to assign because author (David Smith) and reviewer 
+     (Dr. Alice Chen) both belong to Stanford University."
+
+* Backend Enforcement (POST /api/assign):
+  - If a client bypasses the frontend and attempts to assign conflicting parties, 
+    the backend strictly rejects the request with HTTP 409 Conflict:
+    {
+      "success": false,
+      "status_code": 409,
+      "error": "Conflict of Interest: Author (David Smith) and Reviewer (Dr. Alice Chen) both belong to 'Stanford University'."
+    }
+
+
+================================================================================
+6. MASTER DATA MANAGEMENT (ARTICLES & REVIEWERS)
+================================================================================
+
+Accessible via the left slim dock navigation rail:
+
+A. 📄 Article Master:
+* Click the "📄 Articles" icon on the dock rail.
+* Master Registry Table: View all manuscripts, IDs, authors, affiliations, 
+  and assigned reviewers.
+* Add New Article: Click "➕ Add New Article". Enter manuscript title, author 
+  name, and author institution. It is immediately persisted to `api/data/articles.json`.
+* Delete Article: Click "🗑️ Delete" to permanently remove a manuscript and 
+  cascade-delete any associated reviewer assignments.
+
+B. 👥 Reviewer Master:
+* Click the "👥 Reviewers" icon on the dock rail.
+* Master Registry Table: View all peer reviewers, IDs, names, affiliations, 
+  and expertise keyword chips.
+* Add New Reviewer: Click "➕ Add New Reviewer". Enter full name, university, 
+  and comma-separated keywords. Persisted to `api/data/reviewers.json`.
+* Delete Reviewer: Click "🗑️ Delete" to permanently remove a reviewer and 
+  clear any assignments referring to them.
+
+
+================================================================================
+7. SETTINGS & DATA MANAGEMENT (RESTORE DEFAULT MOCK DATA)
+================================================================================
+
+Accessible via the left dock gear icon ("⚙️") or the top-right profile dropdown:
+
+A. Account Security (Change Password):
+* Enter your Current Password, New Password (min 6 characters), and Confirm Password.
+* Click "Update Password".
+* Updates credentials in `api/data/users.json`.
+
+B. Email Notifications on Assignment:
+* Toggle "Referee Assignment Dispatch" switch in Settings.
+* When Enabled: Whenever a reviewer is assigned to a manuscript, the system 
+  dispatches an automated referee notification email alert:
+  "Reviewer [Name] assigned to '[Title]'. 📧 Email notification sent to reviewer."
+* When Disabled: Reviewer assignment proceeds safely without dispatching an email alert.
+* Preference is automatically persisted in browser localStorage (`straive_email_notifications`).
+
+C. Restore Default Mock JSON Data:
+* Located in Settings directly below Email Notifications.
+* Click "🔄 Restore Default JSON Data".
+* Action:
+  1. Restores `articles.json` from `mock_openalex_data.json`.
+  2. Restores `reviewers.json` from `mock_openalex_data.json`.
+  3. Clears `assignments.json` back to empty.
+  4. Automatically refreshes all frontend signals and dashboard statistics.
+
+
+================================================================================
+8. REST API ENDPOINTS SPECIFICATION
+================================================================================
+Base URL: http://localhost/straive_task/api
+
+1. POST /login
+   Body:     { "email": "editor@straive.com", "password": "admin123" }
+   Response: 200 OK with JWT token and user profile object.
+
+2. POST /change-password
+   Body:     { "current_password": "...", "new_password": "...", "email": "..." }
+   Response: 200 OK on success, 400 Bad Request on invalid password.
+
+3. GET  /articles
+   Response: 200 OK with list of all articles and current assigned reviewers.
+
+4. POST /articles
+   Body:     { "title": "...", "author": { "name": "...", "institution": "..." } }
+   Response: 201 Created with saved article object.
+
+5. POST /articles/delete
+   Body:     { "id": "art_101" }
+   Response: 200 OK.
+
+6. GET  /reviewers
+   Response: 200 OK with list of all peer reviewers.
+
+7. POST /reviewers
+   Body:     { "name": "...", "institution": "...", "keywords": ["AI", "NLP"] }
+   Response: 201 Created with saved reviewer object.
+
+8. POST /reviewers/delete
+   Body:     { "id": "rev_001" }
+   Response: 200 OK.
+
+9. POST /assign
+   Body:     { "article_id": "art_101", "reviewer_id": "rev_002" }
+   Response: 201 Created if institutions differ.
+             409 Conflict if author and reviewer institutions match.
+
+10. GET  /stats
+    Response: 200 OK with live dashboard metrics counts.
+
+11. POST /reset
+    Response: 200 OK (restores default mock data & clears assignments).
+
+
+================================================================================
+9. AUTOMATED VERIFICATION SUITE
+================================================================================
+An automated PHP test suite is included to verify all backend functionality 
+without requiring a browser.
+
+To execute the test suite:
+& "C:\xampp\php\php.exe" C:\xampp\htdocs\straive_task\api\verify.php
+
+Verification Tests Executed:
+1. Mock openalex data exists & reads articles/reviewers... [PASSED]
+2. JWT HMAC-SHA256 Token creation & signature validation... [PASSED]
+3. Stanford Lead Author vs Stanford Referee Conflict rule... [PASSED]
+4. Stanford Lead Author vs MIT Referee Safe Assignment...   [PASSED]
+5. Storage directory & data files writable...             [PASSED]
+6. Article Master: add and remove simulated article...    [PASSED]
+7. Reviewer Master: add and remove simulated reviewer...   [PASSED]
+8. Password storage & change logic...                     [PASSED]
+
+
+================================================================================
+10. TROUBLESHOOTING & COMMON QUESTIONS
+================================================================================
+
+Q: Apache in XAMPP does not start (Port 80 busy)?
+A: Ensure no other web server (such as IIS or Skype) is occupying port 80. You can 
+   also change Apache's port in `httpd.conf` to 8080 if necessary.
+
+Q: Angular fails to reach the backend?
+A: Ensure XAMPP Apache is started. The Angular development server uses 
+   `proxy.conf.json` to proxy `/api/*` to `http://localhost/straive_task/api/`.
+
+Q: Can I restore my test data after adding or deleting records?
+A: Yes. Click the gear icon ("⚙️") in the dock rail or profile menu, scroll down 
+   to "Restore Default Mock JSON Data", and click "Restore Default JSON Data".
+
+================================================================================
+                          END OF USER MANUAL
+================================================================================

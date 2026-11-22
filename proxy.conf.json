@@ -1,0 +1,15 @@
+{
+  "/straive_task/api": {
+    "target": "http://localhost",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api": {
+    "target": "http://localhost/straive_task/api",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api": ""
+    }
+  }
+}
